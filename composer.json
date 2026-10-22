@@ -1,0 +1,17 @@
+{
+    "name": "jund-fauz/regex-builder",
+    "description": "Build regex expression without need to memorize any regex symbol",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "JundFauz\\RegexBuilder\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "jund-fauz",
+            "email": "mujadidjundifauzi200@gmail.com"
+        }
+    ]
+}
