@@ -31,6 +31,11 @@ class Regex
         );
     }
 
+    public static function endsWith(string $sentenceOrWord): string
+    {
+        return "$sentenceOrWord$";
+    }
+
     public static function exceptWord(string $word): string
     {
         return "(?!$word)";
