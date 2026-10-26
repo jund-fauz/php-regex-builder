@@ -72,6 +72,15 @@ class Regex implements Stringable
     }
 
     /**
+     * @param array{result?: string} $properties
+     * @return static
+     */
+    public static function __set_state(array $properties): static
+    {
+        return (new static)->set($properties['result'] ?? '');
+    }
+
+    /**
      * Puts the current pattern in front of the given operands, unless it is still empty
      */
     protected function withResult(string|self ...$patterns): array
