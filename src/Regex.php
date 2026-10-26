@@ -4,55 +4,87 @@ namespace JundFauz\RegexBuilder;
 
 use JundFauz\RegexBuilder\Helper\Arr;
 use JundFauz\RegexBuilder\Helper\Str;
+use Stringable;
 
-class Regex
+class Regex implements Stringable
 {
-    public static function create(string|array $regex): string|array
+    public const string DELIMITER = '/';
+
+    protected string $result = '';
+
+    public static function create(string|self $pattern = ''): static
     {
-        if (is_string($regex)) {
-            $regex = [$regex];
-        }
-
-        $regex = array_map(fn ($value) => "/$value/", $regex);
-
-        if (count($regex) === 1) {
-            $regex = $regex[0];
-        }
-
-        return $regex;
+        return (new static)->set(static::raw($pattern));
     }
 
-    public static function exact(string ...$sentenceOrWord): string
+    public function exact(string|self ...$sentenceOrWord): static
     {
-        return Str::concat(
+        return $this->set(Str::concat(
             '^',
-            Arr::arrange($sentenceOrWord),
+            Arr::arrange($this->withResult(...$sentenceOrWord)),
             '$'
-        );
+        ));
     }
 
-    public static function endsWith(string $sentenceOrWord): string
+    public function endsWith(string|self ...$sentenceOrWord): static
     {
-        return "$sentenceOrWord$";
+        return $this->set(Arr::arrange($this->withResult(...$sentenceOrWord)) . '$');
     }
 
-    public static function exceptWord(string $word): string
+    public function exceptWord(string|self $word): static
     {
-        return "(?!$word)";
+        return $this->set(Arr::arrange($this->withResult('(?!' . static::raw($word) . ')')));
     }
 
-    public static function containOneOf(Quantifier|string $conditionCount = '', string ...$requirements): string
+    public function contain(Quantifier|string $conditionCount = '', string|self ...$requirements): static
     {
-        return Str::concat(
+        return $this->set(Str::concat(
             '[',
-            Arr::arrange($requirements),
+            Arr::arrange($this->withResult(...$requirements)),
             ']',
             is_string($conditionCount) ? $conditionCount : $conditionCount->value
-        );
+        ));
     }
 
-    public static function range(string $from, string $until): string
+    public function range(string $from, string $until): static
     {
-        return "$from-$until";
+        return $this->set(Arr::arrange($this->withResult("$from-$until")));
+    }
+
+    /**
+     * Returns the pattern wrapped in delimiters, ready to be used by preg_* functions
+     */
+    public function build(): string
+    {
+        return Str::concat(static::DELIMITER, $this->result, static::DELIMITER);
+    }
+
+    public function __toString(): string
+    {
+        return $this->build();
+    }
+
+    protected function set(string $pattern): static
+    {
+        $newRegex = new static;
+        $newRegex->result = $pattern;
+        return $newRegex;
+    }
+
+    /**
+     * Puts the current pattern in front of the given operands, unless it is still empty
+     */
+    protected function withResult(string|self ...$patterns): array
+    {
+        $patterns = array_map(fn (string|self $pattern) => static::raw($pattern), $patterns);
+        return $this->result === '' ? $patterns : [$this->result, ...$patterns];
+    }
+
+    /**
+     * Takes the undelimited pattern, so a nested Regex does not carry its delimiters along
+     */
+    protected static function raw(string|self $pattern): string
+    {
+        return $pattern instanceof self ? $pattern->result : $pattern;
     }
 }
